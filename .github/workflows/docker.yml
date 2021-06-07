@@ -1,9 +1,6 @@
-name: Build Docker Image for Radicale
+name: Build and Test Docker Image for Radicale
 on:
   push:
-    branches:
-      - master
-  pull_request:
 
 jobs:
   build:
@@ -21,32 +18,11 @@ jobs:
           mv radicale-out.cfg radicale.cfg
       - name: Build Docker Image
         run: docker build --tag radicale .
-      - name: Save Docker Image
-        run: docker save radicale > docker-image.tar
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: image
-          path: docker-image.tar
-          retention-days: 1
-
-  tests:
-    name: Test Image
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Get Docker Image
-        uses: actions/download-artifact@v2
-        with:
-          name: image
-      - name: Load Docker Image
-        run: docker load < docker-image.tar
       - name: Create Radicale Data Folder
         run: mkdir data
       - name: Run Docker Image
         run: docker run -d -p 5232:5232 --name=radicale -v data:/var/lib/radicale radicale
-      - name: Run Tests
-        run: sleep 5 && curl -vL localhost:5232
+      - name: Test Docker Image
+        run: sleep 5 && curl -vL localhost:5232 | grep "Radicale works"
       - name: Remove Docker Images
         run: docker rm -f radicale
